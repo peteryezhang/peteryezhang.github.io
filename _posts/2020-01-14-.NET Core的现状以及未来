@@ -1,0 +1,18 @@
+---
+layout:     post                    # 使用的布局（不需要改）
+title:      .NET Core的现状以及未来               # 标题 
+subtitle:   站在2020门槛上一个小小的总结  #副标题
+date:       2020-01-14              # 时间
+author:     Peter                      # 作者
+header-img: img/post-bg-2015.jpg    #这篇文章标题背景图片
+catalog: true                       # 是否归档
+tags:                               #标签
+    - .NET
+---
+# .NET Core的现状以及未来  
+
+自从2016.2发布 .NET Core 1.0 RC1 版本以来，[.NET Core](https://dotnet.microsoft.com/download/dotnet-core) 已经经历了多次迭代，当前最新版本是 .NET Core 3.1。  
+当前处于LTS长期支持的版本是 .NET Core2.1以及 .NET Core 3.1。 
+未来 .NET Framework & .NET Core将会融合成 .NET 5.0。双号的版本会作为LTS版本，单号的版本会转变为Maintance版本。  
+当前的3.1版本在Win/Linux/Mac系统上均能得到比较好的支持, Visual Studio 2019 for Mac已经原生支持 .NET Core 3.1且在构建WEB Application时已拥有很好的体验。  
+在使用MAC开发 .NET应用时，Web application拥有远好于console application的用户体验。
