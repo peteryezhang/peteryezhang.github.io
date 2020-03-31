@@ -38,8 +38,92 @@ tags:                               #标签
 默认的TaskScheduler类是基于 .NET Framework 4的线程池，这也是TPL以及PLINQ使用的类。其可以控制同步线程的最大数量(thread injection/retirement for maximum throughput)，防止线程偷懒(work-stealing for load-balancing)以及监控整体任务队列。  
 具体地，`TaskScheduler`提供了`QueueTask`为任务提供FIFO的队列。
 
+## `SynchronizationContext` & `TaskScheduler` 跟 `await`之间的关系
+
+在涉及UI线程的demo中，如果我们想要点击某个button async执行某些异步操作，然后将返回的结果返回到button的content中，我们必须确保UI thread跟async操作返回结果的线程是同一个线程。  
+如果显示地使用`TaskScheduler`，我们需要如下操作:
+
+```
+private static readonly HttpClient s_httpClient = new HttpClient();
+
+private void downloadBtn_Click(object sender, RoutedEventArgs e)
+{
+    s_httpClient.GetStringAsync("http://example.com/currenttime").ContinueWith(downloadTask =>
+    {
+        downloadBtn.Content = downloadTask.Result;
+    }, TaskScheduler.FromCurrentSynchronizationContext());
+}
+```
+
+如果显示地使用`SynchronizationContext`，我们需要如下操作:
+
+```
+private static readonly HttpClient s_httpClient = new HttpClient();
+
+private void downloadBtn_Click(object sender, RoutedEventArgs e)
+{
+    SynchronizationContext sc = SynchronizationContext.Current;
+    s_httpClient.GetStringAsync("http://example.com/currenttime").ContinueWith(downloadTask =>
+    {
+        sc.Post(delegate
+        {
+            downloadBtn.Content = downloadTask.Result;
+        }, null);
+    });
+}
+```
+
+但是在具体使用`await`操作符的实践中，我们是这样写代码的：
+```
+private static readonly HttpClient s_httpClient = new HttpClient();
+
+private async void downloadBtn_Click(object sender, RoutedEventArgs e)
+{
+    string text = await s_httpClient.GetStringAsync("http://example.com/currenttime");
+    downloadBtn.Content = text;
+}
+```
+可见，`await`为我们隐藏了幕后的很多操作。具体地，当对某一Task使用`await`时,`await`会调用`GetAwaiter`方法来查看任务返回的`TaskAwaiter<T>`。然后这一`awiter`会调用之后的`continuation`，在本例中为
+```
+    downloadBtn.Content = text;
+```
+同时`awaiter`会尝试获取目前能获取的`context/scheduler`：
+```
+object scheduler = SynchronizationContext.Current;
+if (scheduler is null && TaskScheduler.Current != TaskScheduler.Default)
+{
+    scheduler = TaskScheduler.Current;
+}
+```
+也就是`awaiter`会先尝试获取当前的`SynchronizationContext`，如果获取不到的话会再去获取当前的`TaskScheduler`。  
+
+## ConfigureAwait(false)的用法
+
+首先需要了解`await`可以用在任何返回正确design pattern的结构之前。如果在一个Task后面使用`ConfigureAwait(false)`，如下：
+```
+var t = Task.Run(delegate);
+var configuredTaskAwaitable = t.ConfigureAwait(continueOnCapturedContext: false);
+```
+也就是说`ConfigureAwait`会返回一个`await`能处理的结构体`configuredTaskAwaitable`，然后把具体的Task t转换成如下的结构：
+```
+object scheduler = null;
+if (continueOnCapturedContext)
+{
+    scheduler = SynchronizationContext.Current;
+    if (scheduler is null && TaskScheduler.Current != TaskScheduler.Default)
+    {
+        scheduler = TaskScheduler.Current;
+    }
+}
+```
+因为`continueOnCapturedContext == false`，所以调用`ConfigureAwait(false)`的task将不再以来`SynchronizationContext`或者`TaskScheduler`。  
+
+## 什么时候应该使用ConfigureAwait(false)
+
+如果是应用级别的代码，比如Windows Forms, WPF, ASP.NET Core，基本可以默认不使用。如果是Library级别的通用代码，则一般无需考虑了synchrnizationContext的问题，可以使用。  
+
+
 
 ## 参考
-1. [Parallel Computing - It's All About the SynchronizationContext](https://docs.microsoft.com/en-us/archive/msdn-magazine/2011/february/msdn-magazine-parallel-computing-it-s-all-about-the-synchronizationcontext)
-2.https://devblogs.microsoft.com/dotnet/configureawait-faq/
-https://docs.microsoft.com/en-us/dotnet/api/system.threading.synchronizationcontext?view=netframework-4.8
+1. [Parallel Computing - It's All About the SynchronizationContext](https://docs.microsoft.com/en-us/archive/msdn-magazine/2011/february/msdn-magazine-parallel-computing-it-s-all-about-the-synchronizationcontext)  
+2. [ConfigureAwait FAQ](https://devblogs.microsoft.com/dotnet/configureawait-faq/)
