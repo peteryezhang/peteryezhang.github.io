@@ -192,10 +192,10 @@ myCar.year = 1969;
 
 ```
 var myHonda = {color: 'red', wheels: 4, engine: {cylinders: 4, size: 2.2}};
+```  
 
-```
+2. Using a constructor function  
 
-2. Using a constructor function
 ```
 function Car(make, model, year) {
   this.make = make;
@@ -205,9 +205,10 @@ function Car(make, model, year) {
 
 var mycar = new Car('Eagle', 'Talon TSi', 1993);
 
-```
+```  
 
 3. Using the Object.create method
+
 ```
 // Animal properties and method encapsulation
 var Animal = {
@@ -216,7 +217,6 @@ var Animal = {
     console.log(this.type);
   }
 };
-
 // Create new animal type called animal1 
 var animal1 = Object.create(Animal);
 animal1.displayType(); // Output:Invertebrates
@@ -234,6 +234,7 @@ Object的property可以通过Index或者property name访问。需要注意的是
 ### Using this for object references
 
 `this`使得我们可以在function内引用当前的对象。  
+
 ```
 const Manager = {
   name: "John",
