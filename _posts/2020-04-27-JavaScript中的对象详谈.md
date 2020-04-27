@@ -115,3 +115,103 @@ mark.bonus = 3000;
 Employee.prototype.specialty = "none";
 ```
 
+## 更灵活的构造器
+
+### 为实例设置本地属性的默认值
+
+到目前为止，本文所展示的构造函数都不能让你在创建新实例时为其制定属性值。其实我们也可以像 Java 一样，为构造器提供参数以初始化实例的属性值。下图展示了一种实现方式。  
+![avatar](https://developer.mozilla.org/@api/deki/files/4423/=figure8.5.png)
+
+上面使用 JavaScript 定义过程使用了一种设置默认值的特殊惯用法：
+
+```
+this.name = name || "";
+```
+JavaScript 的逻辑或操作符（||）会对第一个参数进行判断。如果该参数值运算后结果为真，则操作符返回该值。否则，操作符返回第二个参数的值。因此，这行代码首先检查 name 是否是对name 属性有效的值。如果是，则设置其为 this.name 的值。否则，设置 this.name 的值为空的字符串。  
+
+### 为实例设置继承属性的默认值
+
+可以通过直接调用原型链上的更高层次对象的构造函数，让构造器添加更多的属性。下图即实现了这一功能。  
+
+![avatar](https://developer.mozilla.org/@api/deki/files/4430/=figure8.6.png)  
+
+这是Engineer构造函数的新定义：  
+
+```
+function Engineer (name, projs, mach) {
+  this.base = WorkerBee;
+  this.base(name, "engineering", projs);
+  this.machine = mach || "";
+}
+```
+假如创建了一个新的`Engineer`对象：  
+```
+var jane = new Engineer("Doe, Jane", ["navigator", "javascript"], "belau");
+
+```
+JavaScript 会按以下步骤执行：  
+
+1. new 操作符创建了一个新的对象，并将其 __proto__ 属性设置为 Engineer.prototype。
+2. new 操作符将该新对象作为 this 的值传递给 Engineer 构造函数。
+3. 构造函数为该新对象创建了一个名为 base 的新属性，并指向 WorkerBee 的构造函数。这使得 WorkerBee 构造函数成为 Engineer 对象的一个方法。base 属性的名称并没有什么特殊性，我们可以使用任何其他合法的名称来代替；base 仅仅是为了贴近它的用意。
+4. 构造函数调用 base 方法，将传递给该构造函数的参数中的两个，作为参数传递给 base 方法，同时还传递一个字符串参数  "engineering"。显式地在构造函数中使用 "engineering" 表明所有 Engineer 对象继承的 dept 属性具有相同的值，且该值重载了继承自 Employee 的值。
+5. 因为 base 是 Engineer 的一个方法，在调用 base 时，JavaScript 将在步骤 1 中创建的对象绑定给 this 关键字。这样，WorkerBee 函数接着将 "Doe, Jane" 和 "engineering" 参数传递给 Employee 构造函数。当从 Employee 构造函数返回时，WorkerBee 函数用剩下的参数设置 projects 属性。
+
+6. 当从 base 方法返回后，Engineer 构造函数将对象的 machine 属性初始化为 "belau"。
+当从构造函数返回时，JavaScript 将新对象赋值给 jane 变量。  
+
+值得注意的是，如果在目前的构造方法之后添加了新的属性，这些属性将不会被同步到prototype。  
+
+```
+function Engineer (name, projs, mach) {
+  this.base = WorkerBee;
+  this.base(name, "engineering", projs);
+  this.machine = mach || "";
+}
+** Engineer.prototype = new WorkerBee;**
+var jane = new Engineer("Doe, Jane", ["navigator", "javascript"], "belau");
+Employee.prototype.specialty = "none";
+``` 
+
+需要显式地把`Engineer`的prototype设置为`WorkBee`。  
+
+继承的另一种途径是使用`call() / apply()` 方法。下面的方式都是等价的：
+
+```
+function Engineer (name, projs, mach) {
+  this.base = WorkerBee;
+  this.base(name, "engineering", projs);
+  this.machine = mach || "";
+}
+```  
+
+```
+function Engineer (name, projs, mach) {
+  WorkerBee.call(this, name, "engineering", projs);
+  this.machine = mach || "";
+}
+```  
+
+## 再谈属性的继承
+
+前面的小节中描述了 JavaScript 构造器和原型如何提供层级结构和继承的实现。本节中对之前未讨论的一些细节进行阐述。  
+
+### 本地值和继承值
+
+正如本章前面所述，在访问一个对象的属性时，JavaScript 将执行下面的步骤：  
+
+1. 检查对象自身是否存在。如果存在，返回值。
+2. 如果本地值不存在，检查原型链（通过 __proto__ 属性）。
+3. 如果原型链中的某个对象具有指定属性，则返回值。
+4. 如果这样的属性不存在，则对象没有该属性，返回 undefined。  
+
+### 判断实例的关系
+
+JavaScript 的属性查找机制首先在对象自身的属性中查找，如果指定的属性名称没有找到，将在对象的特殊属性 __proto__ 中查找。这个过程是递归的；被称为“在原型链中查找”。  
+
+每个对象都有一个 __proto__ 对象属性（除了 Object）；每个函数都有一个 prototype 对象属性。因此，通过“原型继承”，对象与其它对象之间形成关系。通过比较对象的 __proto__ 属性和函数的 prototype 属性可以检测对象的继承关系。JavaScript 提供了便捷方法：instanceof 操作符可以用来将一个对象和一个函数做检测，如果对象继承自函数的原型，则该操作符返回真。例如：  
+
+```
+var f = new Foo();
+var isTrue = (f instanceof Foo);
+```  
