@@ -10,6 +10,9 @@ tags:                               #标签
     - JavaScript
 ---
 
+*本篇摘选自Mozilla的JavaScript文档： https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Working_with_Objects*
+
+
 ## 前言
 
 JavaScript作为一种基于对象的语言，与以往基于Class的语言有着较大不同。在JavaScript中一个对象就是一系列属性的集合，一个属性包含一个名和一个值。一个属性的值可以是函数，这种情况下属性也被称为方法。  
