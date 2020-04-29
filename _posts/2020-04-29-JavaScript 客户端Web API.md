@@ -10,7 +10,7 @@ tags:                               #标签
     - JavaScript
 ---
 
-*本篇摘选自Mozilla的JavaScript文档： https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Client-side_web_APIs *
+*本篇摘选自Mozilla的JavaScript文档： https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Client-side_web_APIs*
 
 当你给网页或者网页应用编写客户端的JavaScript时， 你很快会遇上应用程序接口（API ）—— 这些编程特性可用来操控网站所基于的浏览器与操作系统的不同方面，或是操控由其他网站或服务端传来的数据。  
 
