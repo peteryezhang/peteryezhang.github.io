@@ -23,4 +23,32 @@ tags:                               #标签
 2. 单体架构所有模块共用一个数据库，存储方式单一。微服务每个模块可以使用不同存储方式（redis, musql等）。
 3. 单体架构所有模块所使用的技术一样。 微服务每个模块可以使用不同的开发方式。  
 
-## Test Oauth
+## 微服务主要架构
+
+1. Spring Cloud
+2. Dubbo
+3. Dropwizard
+4. Consul
+
+## Spring Cloud主要模块
+
+1. 服务发现 - Netflix Eureka(Nacos)
+2. 服务调用 - Netflix Feign
+3. 熔断器 - Netflix Hystrix
+4. 服务网关 - Spring Cloud Gateway
+5. 分布式配置 - Spring Cloud Config(Nacos)
+6. 消息总线 - Spring Cloud Bus(Nacos)
+
+
+## Nacos
+
+Nacos可用于服务注册，配合Feign可用于远程调用不同服务的API。  
+
+## Spring Cloud远程调用流程 
+
+Feign -> Hystrix -> Ribbon -> Http Client (Apache http components or Okhttp) 
+
+Hystrix充当熔断器，判断来自消费者的调用请求是否可以远程调用。  
+
+Ribbon用于负载均衡，将来自多个消费者的请求分发到各个生产者。  
+
