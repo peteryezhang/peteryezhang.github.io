@@ -1,7 +1,7 @@
 ---
 layout:     post                    # 使用的布局（不需要改）
 title:     Kubernetes容器编排与Kunernetes作业管理     # 标题 
-subtitle:   为什么我们需要Pod？  #副标题
+subtitle:   Pod原理  #副标题
 date:       2020-07-07             # 时间
 author:     Peter                      # 作者
 header-img: img/post-bg-2015.jpg    #这篇文章标题背景图片
@@ -87,4 +87,66 @@ spec:
 
 1. WAR 包与 Web 服务器： Tomcat 容器是我们要使用的主容器，而 WAR 包容器的存在，只是为了给它提供一个 WAR 包而已。所以，我们用 Init Container 的方式优先运行 WAR 包容器，扮演了一个 sidecar 的角色。  
 2. 容器的日志收集。 
+
+## Pod管理的属性
+
+凡是调度、网络、存储，以及安全相关的属性，基本上是 Pod 级别的。  
+
+### Pod中YAML文件中的字段
+
++ ImagePullPolicy
++ Lifecycle
+
+具体的：
+
++  Pending。这个状态意味着，Pod 的 YAML 文件已经提交给了 Kubernetes，API 对象已经被创建并保存在 Etcd 当中。但是，这个 Pod 里有些容器因为某种原因而不能被顺利创建。比如，调度不成功。
++ Running。这个状态下，Pod 已经调度成功，跟一个具体的节点绑定。它包含的容器都已经创建成功，并且至少有一个正在运行中。
++ Succeeded。这个状态意味着，Pod 里的所有容器都正常运行完毕，并且已经退出了。这种情况在运行一次性任务时最为常见。
++ Failed。这个状态下，Pod 里至少有一个容器以不正常的状态（非 0 的返回码）退出。这个状态的出现，意味着你得想办法 Debug 这个容器的应用，比如查看 Pod 的 Events 和日志。
++ Unknown。这是一个异常状态，意味着 Pod 的状态不能持续地被 kubelet 汇报给 kube-apiserver，这很有可能是主从节点（Master 和 Kubelet）间的通信出现了问题。
+
+## Projected Volume - 投射数据卷
+
+在 Kubernetes 中，有几种特殊的 Volume，它们存在的意义不是为了存放容器里的数据，也不是用来进行容器和宿主机之间的数据交换。这些特殊 Volume 的作用，是为容器提供预先定义好的数据。所以，从容器的角度来看，这些 Volume 里的信息就是仿佛是**被 Kubernetes“投射”（Project）进入容器当中的**。这正是 Projected Volume 的含义。  
+
+到目前为止，Kubernetes 支持的 Projected Volume 一共有四种：
++ Secret；
++ ConfigMap；
++ Downward API；
++ ServiceAccountToken。
+
+### Secret
+
+首先可以通过`kubectl create secret`或者创建YAML创建secret对象，然后将对象配置到Pod中containers:
+
+```
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-projected-volume 
+spec:
+  containers:
+  - name: test-secret-volume
+    image: busybox
+    args:
+    - sleep
+    - "86400"
+    volumeMounts:
+    - name: mysql-cred
+      mountPath: "/projected-volume"
+      readOnly: true
+  volumes:
+  - name: mysql-cred
+    projected:
+      sources:
+      - secret:
+          name: user
+      - secret:
+          name: pass
+```
+
+### 容器健康检查和恢复机制
+
+在 Kubernetes 中，你可以为 Pod 里的容器定义一个健康检查“探针”（Probe）。这样，kubelet 就会根据这个 Probe 的返回值决定这个容器的状态，而不是直接以容器进行是否运行（来自 Docker 返回的信息）作为依据。这种机制，是生产环境中保证应用健康存活的重要手段。  
 
