@@ -1,6 +1,6 @@
 ---
 layout:     post                    # 使用的布局（不需要改）
-title:     Kubernetes容器编排与Kunernetes作业管理(1)     # 标题 
+title:     Kubernetes容器入门之Pod    # 标题 
 subtitle:   Pod原理  #副标题
 date:       2020-07-07             # 时间
 author:     Peter                      # 作者
