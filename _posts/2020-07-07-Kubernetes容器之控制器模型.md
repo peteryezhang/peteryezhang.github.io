@@ -1,7 +1,7 @@
 ---
 layout:     post                    # 使用的布局（不需要改）
-title:     Kubernetes容器编排与Kunernetes作业管理（2）     # 标题 
-subtitle:    控制器模型  #副标题
+title:     Kubernetes容器之控制器模型     # 标题 
+subtitle:      #副标题
 date:       2020-07-07             # 时间
 author:     Peter                      # 作者
 header-img: img/post-bg-2015.jpg    #这篇文章标题背景图片
